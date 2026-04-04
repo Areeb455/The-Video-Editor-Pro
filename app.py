@@ -37,12 +37,11 @@ from datetime import datetime, timedelta
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
-try:
-    from sentence_transformers import util
-except ImportError:
-    import sentence_transformers.util as util
-import numpy as np
+# Heavy libraries will be lazy-loaded in functions that use them:
+# import torch
+# from sentence_transformers import SentenceTransformer, util
+# import numpy as np
+# import cv2
 import yt_dlp
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -51,7 +50,6 @@ import re
 from collections import Counter
 import gc
 from concurrent.futures import ThreadPoolExecutor
-import cv2
 
 # Load environment variables
 load_dotenv()
@@ -845,12 +843,22 @@ os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 db = SQLAlchemy(app)
 
 # Initialize ML models
-try:
-    ml_model = SentenceTransformer('all-MiniLM-L6-v2')
-    print("ML model loaded successfully")
-except Exception as e:
-    print(f"Warning: Could not load ML model: {e}")
-    ml_model = None
+# ML model will be lazy-loaded via get_ml_model()
+ml_model = None
+
+def get_ml_model():
+    """Lazy load the SentenceTransformer model to save memory."""
+    global ml_model
+    if ml_model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            print("Loading ML model...")
+            ml_model = SentenceTransformer('all-MiniLM-L6-v2')
+            print("ML model loaded successfully")
+        except Exception as e:
+            print(f"Warning: Could not load ML model: {e}")
+            return None
+    return ml_model
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -1137,8 +1145,7 @@ def run_ffmpeg_command(cmd, timeout=300):
 # Check FFmpeg at startup
 ffmpeg_available = check_ffmpeg()
 
-# Initialize ML models
-ml_model = SentenceTransformer('all-MiniLM-L6-v2')
+# ml_model removed from here, now handled by get_ml_model()
 
 # Create database tables
 with app.app_context():
@@ -5866,6 +5873,8 @@ def search_pexels_clips():
 def process_video_segment(video_clip, target_size):
     """Process video segment using ML-based optimization."""
     def process_frame(frame):
+        import numpy as np
+        import cv2
         # Convert to numpy array for ML processing
         frame = np.array(frame)
         
@@ -6027,6 +6036,8 @@ def merge_with_pexels():
             cleanup_files(input_paths)
             
             print(f"Debug - Pexels merge completed successfully")
+            import gc
+            gc.collect()
             return jsonify({
                 'success': True,
                 'output_file': output_filename
@@ -7345,6 +7356,8 @@ def analyze_style():
         # Extract color palette from video frames using OpenCV
         palette = []
         try:
+            import cv2
+            import numpy as np
             cap = cv2.VideoCapture(input_path)
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             sample_frames = [int(frame_count * r) for r in [0.1, 0.3, 0.5, 0.7, 0.9] if frame_count > 0]

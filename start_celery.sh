@@ -6,13 +6,7 @@ echo "Starting Redis server..."
 redis-server --daemonize yes
 
 echo "Starting Celery worker..."
-celery -A celery_worker worker --loglevel=info --concurrency=2 --queues=video_processing,maintenance &
-
-echo "Starting Celery beat scheduler..."
-celery -A celery_worker beat --loglevel=info &
-
-echo "Starting Flask application..."
-python app.py
+celery -A celery_worker worker --loglevel=info --concurrency=1 --queues=video_processing,maintenance &
 
 # Keep script running
 wait
