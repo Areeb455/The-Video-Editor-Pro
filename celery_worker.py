@@ -14,12 +14,9 @@ import json
 # Import your Flask app if needed
 # from app import app
 
-# Configure Celery with Redis
-celery = Celery(
-    'video_processor',
-    broker='redis://localhost:6379/0',      # Redis broker
-    backend='redis://localhost:6379/0'      # Redis backend for results
-)
+# Configure Celery (broker and backend settings are in celeryconfig.py)
+celery = Celery('video_processor')
+celery.config_from_object('celeryconfig')
 
 # Celery configuration
 celery.conf.update(

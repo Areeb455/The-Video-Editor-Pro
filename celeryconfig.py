@@ -9,6 +9,17 @@ import os
 broker_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 result_backend = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
+# Check if Redis is available, otherwise use eager mode (synchronous)
+try:
+    import redis
+    r = redis.from_url(broker_url)
+    r.ping()
+    task_always_eager = False
+except Exception:
+    import logger
+    print("WARNING: Redis not found or unreachable. Falling back to EAGER mode (synchronous tasks).")
+    task_always_eager = True
+
 # Task settings
 task_serializer = 'json'
 result_serializer = 'json'
