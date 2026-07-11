@@ -339,7 +339,7 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
         <div class="row">
             <div class="col-lg-8">
                 <!-- Upload Section -->
-                <div class="feature-content active" id="uploadContent">
+                <div class="upload-section-main mb-4" id="uploadContent" style="background: var(--card-background); border-radius: var(--border-radius); padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3><i class="fas fa-upload me-2"></i>Upload Video</h3>
                     <div class="upload-area" id="uploadArea">
                         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTMyIDJDMTUuNDMxIDIgMiAxNS40MzEgMiAzMmMwIDE2LjU2OSAxMy40MzEgMzAgMzAgMzBzMzAtMTMuNDMxIDMwLTMwQzYyIDE1LjQzMSA0OC41NjkgMiAzMiAyem0wIDRjMTQuMzU5IDAgMjYgMTEuNjQxIDI2IDI2UzQ2LjM1OSA1OCAzMiA1OCA2IDQ2LjM1OSA2IDMyIDIxLjY0MSA2IDMyIDZ6bTAgOGMtMS4xMDQgMC0yIC44OTYtMiAydjE2aC0xNmMtMS4xMDQgMC0yIC44OTYtMiAyczAuODk2IDIgMiAyaDE2djE2YzAgMS4xMDQgMC44OTYgMiAyIDJzMi0wLjg5NiAyLTJWMzZoMTZjMS4xMDQgMCAyLTAuODk2IDItMnMtMC44OTYtMi0yLTJIMzRWMTZjMC0xLjEwNC0wLjg5Ni0yLTItMnoiIGZpbGw9IiM2NjY2NjYiLz48L3N2Zz4=" alt="Upload" style="width: 64px; height: 64px;">
@@ -464,6 +464,10 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                 <!-- New Feature Contents -->
                 <div class="feature-content" id="transitionContent">
                     <h3><i class="fas fa-film me-2"></i>Apply Transitions</h3>
+                    <div class="mb-3">
+                        <label class="form-label">Select Videos (2 or more)</label>
+                        <input type="file" id="transitionFiles" class="form-control" multiple accept="video/*">
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label">Transition Type</label>
@@ -725,14 +729,8 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-mask me-2"></i>Masking</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-upload"></i> Upload Video</div>
-        <div class="upload-zone" id="mask-upload-zone">
-          <i class="fas fa-film"></i>
-          <p>Click or drag a video to get started</p>
-          <input type="file" id="mask-video-input" accept="video/*" style="display:none">
-        </div>
-        <video id="mask-video" controls style="display:none;margin-top:.75rem"></video>
+      <div class="card mb-3" style="display:none;" id="mask-video-container">
+        <video id="mask-video" controls style="width:100%; border-radius:8px;"></video>
       </div>
       <div class="card mb-3">
         <div class="card-title"><i class="fas fa-tools"></i> Mask Tools</div>
@@ -761,6 +759,11 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
         <div class="mb-2">
           <label>Mask Color</label>
           <input type="color" id="mask-color" value="#6c63ff" style="width:100%;height:36px;background:none;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onchange="updateMaskProp()">
+        </div>
+        <div class="section-title mt-3"><i class="fas fa-lightbulb" style="color:#f1c40f;"></i> Quick Presets</div>
+        <div class="flex gap-2 flex-wrap mb-3">
+          <button class="btn" style="background: linear-gradient(45deg, #ff416c, #ff4b2b); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);" onclick="masks=[{type:'rect',x:100,y:50,w:280,h:180,opacity:0.7,feather:15,color:'#6c63ff',blend:'Normal'}]; renderMasks(); updateLayersList();"><i class="fas fa-magic me-1"></i> Center Box</button>
+          <button class="btn" style="background: linear-gradient(45deg, #f7b733, #fc4a1a); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(252, 74, 26, 0.4);" onclick="masks=[{type:'circle',cx:240,cy:140,rx:100,ry:100,opacity:0.8,feather:5,color:'#ff0055',blend:'Multiply'}]; renderMasks(); updateLayersList();"><i class="fas fa-magic me-1"></i> Red Circle</button>
         </div>
       </div>
       <div class="card">
@@ -799,13 +802,8 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-scissors me-2"></i>Bulk Mark & Auto-Cut</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-film"></i> Upload Video</div>
-        <div class="upload-zone" id="ac-upload-zone">
-          <i class="fas fa-film"></i><p>Click or drag a video</p>
-          <input type="file" id="ac-video-input" accept="video/*" style="display:none">
-        </div>
-        <video id="ac-video" controls style="display:none;margin-top:.75rem"></video>
+      <div class="card mb-3" style="display:none;" id="ac-video-container">
+        <video id="ac-video" controls style="width:100%; border-radius:8px;"></video>
       </div>
       <div class="card mb-3">
         <div class="card-title"><i class="fas fa-map-marker-alt"></i> Timeline &amp; Marking</div>
@@ -817,6 +815,11 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
           <button class="btn btn-primary" onclick="acAddMark()"><i class="fas fa-plus"></i> Add Mark Here</button>
           <button class="btn btn-outline" onclick="acClearMarks()"><i class="fas fa-trash"></i> Clear All</button>
           <button class="btn btn-success" onclick="acAutoCut()"><i class="fas fa-scissors"></i> Auto-Cut</button>
+        </div>
+        <div class="section-title mt-3"><i class="fas fa-lightbulb" style="color:#f1c40f;"></i> Quick Presets</div>
+        <div class="flex gap-2 flex-wrap mb-2">
+          <button class="btn" style="background: linear-gradient(45deg, #00b09b, #96c93d); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(0, 176, 155, 0.4);" onclick="acMarks=[{time:1000},{time:3000}]; acRenderMarks(); acDrawTimeline();"><i class="fas fa-bolt me-1"></i> Cut 1s to 3s</button>
+          <button class="btn" style="background: linear-gradient(45deg, #11998e, #38ef7d); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(17, 153, 142, 0.4);" onclick="acMarks=[{time:5000},{time:10000}]; acRenderMarks(); acDrawTimeline();"><i class="fas fa-bolt me-1"></i> Cut 5s to 10s</button>
         </div>
         <div class="alert alert-info mt-2" style="font-size:.78rem"><i class="fas fa-info-circle me-1"></i>Play the video and click "Add Mark Here" at each cut point. Marks are paired: odd = start, even = end.</div>
       </div>
@@ -845,14 +848,9 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-sliders-h me-2"></i>Audio Effects</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-music"></i> Upload Audio / Video</div>
-        <div class="upload-zone" id="audio-upload-zone">
-          <i class="fas fa-headphones"></i><p>Click or drag a video or audio file</p>
-          <input type="file" id="audio-file-input" accept="video/*,audio/*" style="display:none">
-        </div>
+      <div class="card mb-3" style="display:none;" id="audio-video-container">
         <audio id="audio-player" controls style="display:none;width:100%;margin-top:.75rem;border-radius:8px;"></audio>
-        <video id="audio-video-player" controls style="display:none;width:100%;margin-top:.75rem;"></video>
+        <video id="audio-video-player" controls style="display:none;width:100%;margin-top:.75rem;border-radius:8px;"></video>
       </div>
       <div class="card mb-3">
         <div class="card-title"><i class="fas fa-sliders-h"></i> Effect Chain</div>
@@ -866,6 +864,11 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
           <button class="tag" onclick="audioAddEffect('delay')"><i class="fas fa-redo"></i> Delay</button>
           <button class="tag" onclick="audioAddEffect('compressor')"><i class="fas fa-compress-arrows-alt"></i> Compressor</button>
           <button class="tag" onclick="audioAddEffect('filter')"><i class="fas fa-filter"></i> HP Filter</button>
+        </div>
+        <div class="section-title mt-3"><i class="fas fa-lightbulb" style="color:#f1c40f;"></i> Quick Presets</div>
+        <div class="flex gap-2 flex-wrap mb-2">
+          <button class="btn" style="background: linear-gradient(45deg, #667db6, #0082c8); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(0, 130, 200, 0.4);" onclick="audioChain=[]; audioAddEffect('reverb'); audioAddEffect('eq'); audioRenderChain();"><i class="fas fa-headphones me-1"></i> Concert Hall</button>
+          <button class="btn" style="background: linear-gradient(45deg, #4b6cb7, #182848); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(24, 40, 72, 0.4);" onclick="audioChain=[]; audioAddEffect('delay'); audioAddEffect('filter'); audioRenderChain();"><i class="fas fa-headphones me-1"></i> Radio Voice</button>
         </div>
       </div>
       <div class="card">
@@ -903,15 +906,9 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-bezier-curve me-2"></i>Keyframes</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <!-- Dedicated video upload for keyframes -->
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-film"></i> Upload Video</div>
-        <div class="upload-zone" id="kf-upload-zone" style="padding:1rem;text-align:center;cursor:pointer">
-          <i class="fas fa-film" style="font-size:1.5rem;opacity:.5"></i>
-          <p id="kf-upload-label" style="margin:.4rem 0 0;font-size:.82rem;color:var(--muted)">Click to upload video for keyframe animation</p>
-          <input type="file" id="kf-video-input" accept="video/*" style="display:none">
-        </div>
-        <video id="kf-video-preview" style="display:none;width:100%;border-radius:8px;margin-top:.5rem" controls muted></video>
+      <!-- Dedicated video preview for keyframes -->
+      <div class="card mb-3" style="display:none;" id="kf-video-container">
+        <video id="kf-video-preview" style="width:100%;border-radius:8px;margin-top:.5rem" controls muted></video>
       </div>
       <div class="card mb-3">
         <div class="card-title"><i class="fas fa-bezier-curve"></i> Property Selector</div>
@@ -929,6 +926,12 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
           <button class="btn btn-outline" onclick="kfPrev()"><i class="fas fa-chevron-left"></i></button>
           <button class="btn btn-outline" onclick="kfNext()"><i class="fas fa-chevron-right"></i></button>
           <button class="btn btn-danger" onclick="kfDelete()"><i class="fas fa-trash"></i></button>
+        </div>
+        <div class="section-title mt-3"><i class="fas fa-lightbulb" style="color:#f1c40f;"></i> Quick Presets</div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn" style="background: linear-gradient(45deg, #8E2DE2, #4A00E0); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(142, 45, 226, 0.4);" onclick="kfLoadPreset('fade')"><i class="fas fa-sparkles me-1"></i> Fade Out</button>
+          <button class="btn" style="background: linear-gradient(45deg, #cc2b5e, #753a88); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(204, 43, 94, 0.4);" onclick="kfLoadPreset('zoom')"><i class="fas fa-sparkles me-1"></i> Zoom In 1.5x</button>
+          <button class="btn" style="background: linear-gradient(45deg, #1D976C, #93F9B9); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(29, 151, 108, 0.4);" onclick="kfLoadPreset('spin')"><i class="fas fa-sparkles me-1"></i> Spin 360°</button>
         </div>
       </div>
       <div class="card mb-3">
@@ -978,13 +981,8 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-wind me-2"></i>Motion Blur</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-film"></i> Upload Video</div>
-        <div class="upload-zone" id="mb-upload-zone">
-          <i class="fas fa-film"></i><p>Click or drag a video</p>
-          <input type="file" id="mb-video-input" accept="video/*" style="display:none">
-        </div>
-        <video id="mb-video" controls style="display:none;margin-top:.75rem"></video>
+      <div class="card mb-3" style="display:none;" id="mb-video-container">
+        <video id="mb-video" controls style="width:100%; border-radius:8px;"></video>
       </div>
       <div class="card">
         <div class="card-title"><i class="fas fa-wind"></i> Motion Blur Settings</div>
@@ -1009,6 +1007,11 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
         <div class="mb-2"><label>Threshold</label>
           <div class="slider-row"><input type="range" id="mb-thresh" min="0" max="100" value="20" oninput="mbUpdateVal(this,'mb-thresh-val','%');mbPreview()"><span id="mb-thresh-val">20%</span></div>
         </div>
+        <div class="section-title mt-3"><i class="fas fa-lightbulb" style="color:#f1c40f;"></i> Quick Presets</div>
+        <div class="flex gap-2 flex-wrap mb-3">
+          <button class="btn" style="background: linear-gradient(45deg, #f12711, #f5af19); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(241, 39, 17, 0.4);" onclick="document.getElementById('mb-strength').value=80; mbUpdateVal(document.getElementById('mb-strength'),'mb-str-val','%'); mbPreview();"><i class="fas fa-wind me-1"></i> Heavy Blur</button>
+          <button class="btn" style="background: linear-gradient(45deg, #11998e, #38ef7d); border: none; color: white; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; box-shadow: 0 4px 10px rgba(17, 153, 142, 0.4);" onclick="document.getElementById('mb-strength').value=20; mbUpdateVal(document.getElementById('mb-strength'),'mb-str-val','%'); mbPreview();"><i class="fas fa-wind me-1"></i> Light Motion</button>
+        </div>
         <div class="flex gap-2 mt-3">
           <button class="btn btn-primary" onclick="mbPreview()"><i class="fas fa-eye"></i> Preview</button>
           <button class="btn btn-outline" onclick="mbReset()"><i class="fas fa-undo"></i> Reset</button>
@@ -1032,13 +1035,8 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     <h3><i class="fas fa-chart-line me-2"></i>Style Analysis</h3>
   <div class="two-col" style="align-items:start">
     <div>
-      <div class="card mb-3">
-        <div class="card-title"><i class="fas fa-upload"></i> Upload for Analysis</div>
-        <div class="upload-zone" id="sa-upload-zone">
-          <i class="fas fa-magnifying-glass-chart"></i><p>Click or drag a video to analyze</p>
-          <input type="file" id="sa-video-input" accept="video/*" style="display:none">
-        </div>
-        <video id="sa-video" controls style="display:none;margin-top:.75rem"></video>
+      <div class="card mb-3" style="display:none;" id="sa-video-container">
+        <video id="sa-video" controls style="width:100%; border-radius:8px;"></video>
       </div>
       <div class="card">
         <div class="card-title"><i class="fas fa-chart-line"></i> Analysis Controls</div>
@@ -1152,20 +1150,72 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
             event.currentTarget.classList.add('active');
         }
 
+        function syncFeatureVideos(file) {
+            const objectUrl = URL.createObjectURL(file);
+            const videosToUpdate = [
+                { id: 'mask-video', container: 'mask-video-container', setup: () => { 
+                    const mnv = document.getElementById('mask-no-video');
+                    if(mnv) mnv.style.display='none'; 
+                    if(typeof initMaskCanvas === 'function') initMaskCanvas();
+                } },
+                { id: 'ac-video', container: 'ac-video-container', setup: () => { 
+                    acVideo = document.getElementById('ac-video'); // Ensure global acVideo is set
+                    const v = document.getElementById('ac-video');
+                    if(typeof acUpdateCursor === 'function') v.ontimeupdate = acUpdateCursor; 
+                    acTlCanvas = document.getElementById('ac-timeline'); 
+                    if(acTlCanvas) {
+                        acTlCtx = acTlCanvas.getContext('2d'); 
+                        acTlCanvas.width = acTlCanvas.offsetWidth || 600; 
+                        if(typeof acTimelineClick === 'function') acTlCanvas.onclick = acTimelineClick; 
+                    }
+                    if(typeof acDrawTimeline === 'function') v.onloadedmetadata = acDrawTimeline; 
+                } },
+                { id: 'audio-video-player', container: 'audio-video-container', setup: () => {
+                    document.getElementById('audio-video-player').style.display='block';
+                    document.getElementById('audio-player').style.display='none';
+                } },
+                { id: 'kf-video-preview', container: 'kf-video-container', setup: null },
+                { id: 'mb-video', container: 'mb-video-container', setup: () => { 
+                    mbVideo = document.getElementById('mb-video'); // Ensure global mbVideo is set
+                    const mnv = document.getElementById('mb-no-video');
+                    if(mnv) mnv.style.display='none'; 
+                    if(typeof mbPreview === 'function') {
+                        document.getElementById('mb-video').onseeked = mbPreview; 
+                        setTimeout(mbPreview, 500);
+                    }
+                } },
+                { id: 'sa-video', container: 'sa-video-container', setup: () => {
+                    saVideo = document.getElementById('sa-video'); // Ensure global saVideo is set
+                } }
+            ];
+
+            videosToUpdate.forEach(v => {
+                const el = document.getElementById(v.id);
+                const container = document.getElementById(v.container);
+                if (el) {
+                    el.src = objectUrl;
+                    if(container) container.style.display = 'block';
+                    if (v.setup) {
+                        try { v.setup(); } catch(e) { console.error('Error setting up ' + v.id, e); }
+                    }
+                }
+            });
+        }
+
         // File upload handling
         const uploadArea = document.getElementById('uploadArea');
 
         uploadArea.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'video/*';
+            input.accept = 'video/*,audio/*';
             input.onchange = (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     currentVideo = file;  // Set the currentVideo
                     uploadArea.innerHTML = `
                         <p>Selected file: ${file.name}</p>
-                        <small>Click to change video</small>
+                        <div class="badge mt-2 px-3 py-2" style="background:#6c63ff; color:white; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 12px rgba(108,99,255,0.5);"><i class="fas fa-video me-2"></i>Click to change video</div>
                     `;
                     // Show video preview
                     const videoPreview = document.createElement('video');
@@ -1174,6 +1224,7 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                     videoPreview.style.maxWidth = '100%';
                     videoPreview.style.marginTop = '20px';
                     uploadArea.appendChild(videoPreview);
+                    syncFeatureVideos(file);
                 }
             };
             input.click();
@@ -1192,11 +1243,11 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
             e.preventDefault();
             uploadArea.style.borderColor = '#ccc';
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('video/')) {
+            if (file) {
                 currentVideo = file;  // Set the currentVideo
                 uploadArea.innerHTML = `
                     <p>Selected file: ${file.name}</p>
-                    <small>Click to change video</small>
+                    <div class="badge mt-2 px-3 py-2" style="background:#6c63ff; color:white; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 12px rgba(108,99,255,0.5);"><i class="fas fa-video me-2"></i>Click to change video</div>
                 `;
                 // Show video preview
                 const videoPreview = document.createElement('video');
@@ -1205,6 +1256,7 @@ td{padding:.4rem .6rem;border-bottom:1px solid var(--border);}
                 videoPreview.style.maxWidth = '100%';
                 videoPreview.style.marginTop = '20px';
                 uploadArea.appendChild(videoPreview);
+                syncFeatureVideos(file);
             }
         });
 
@@ -2614,14 +2666,16 @@ async function applyColorGrading() {
 let maskTool = 'rect', masks = [], drawing = false, maskStart = {x:0,y:0};
 let maskKeyframes = [], maskCanvas, maskCtx;
 
-document.getElementById('mask-upload-zone').onclick = () => document.getElementById('mask-video-input').click();
-document.getElementById('mask-video-input').onchange = function() {
-  const f = this.files[0]; if (!f) return;
-  const v = document.getElementById('mask-video');
-  v.src = URL.createObjectURL(f); v.style.display = 'block';
-  document.getElementById('mask-no-video').style.display = 'none';
-  initMaskCanvas();
-};
+if (document.getElementById('mask-upload-zone')) {
+    document.getElementById('mask-upload-zone').onclick = () => document.getElementById('mask-video-input').click();
+    document.getElementById('mask-video-input').onchange = function() {
+      const f = this.files[0]; if (!f) return;
+      const v = document.getElementById('mask-video');
+      v.src = URL.createObjectURL(f); v.style.display = 'block';
+      document.getElementById('mask-no-video').style.display = 'none';
+      initMaskCanvas();
+    };
+}
 
 function initMaskCanvas() {
   maskCanvas = document.getElementById('mask-canvas');
@@ -2723,7 +2777,7 @@ function deleteMask(i) { masks.splice(i, 1); renderMasks(); updateLayersList(); 
 function clearMasks() { masks = []; polyPts = []; renderMasks(); updateLayersList(); }
 async function exportMaskOverlay() {
   if (!maskCanvas) return alert('Draw a mask first.');
-  const file = document.getElementById('mask-video-input').files[0];
+  const file = currentVideo;
   if(!file) return alert('Upload a video first.');
   if(!masks.length) return alert('No masks drawn. Use the drawing tools to draw a mask area first.');
   
@@ -2772,18 +2826,20 @@ function drawMaskTimeline() {
 // ══════════════════════════════════════════════════════════════
 let acMarks = [], acVideo, acTlCanvas, acTlCtx, acAutoCuts = [];
 
-document.getElementById('ac-upload-zone').onclick = () => document.getElementById('ac-video-input').click();
-document.getElementById('ac-video-input').onchange = function() {
-  const f = this.files[0]; if (!f) return;
-  acVideo = document.getElementById('ac-video');
-  acVideo.src = URL.createObjectURL(f); acVideo.style.display = 'block';
-  acVideo.ontimeupdate = acUpdateCursor;
-  acTlCanvas = document.getElementById('ac-timeline');
-  acTlCtx = acTlCanvas.getContext('2d');
-  acTlCanvas.width = acTlCanvas.offsetWidth || 600;
-  acTlCanvas.onclick = acTimelineClick;
-  acVideo.onloadedmetadata = acDrawTimeline;
-};
+if (document.getElementById('ac-upload-zone')) {
+    document.getElementById('ac-upload-zone').onclick = () => document.getElementById('ac-video-input').click();
+    document.getElementById('ac-video-input').onchange = function() {
+      const f = this.files[0]; if (!f) return;
+      acVideo = document.getElementById('ac-video');
+      acVideo.src = URL.createObjectURL(f); acVideo.style.display = 'block';
+      acVideo.ontimeupdate = acUpdateCursor;
+      acTlCanvas = document.getElementById('ac-timeline');
+      acTlCtx = acTlCanvas.getContext('2d');
+      acTlCanvas.width = acTlCanvas.offsetWidth || 600;
+      acTlCanvas.onclick = acTimelineClick;
+      acVideo.onloadedmetadata = acDrawTimeline;
+    };
+}
 function acDrawTimeline() {
   if (!acTlCtx) return;
   const W = acTlCanvas.width, H = 54;
@@ -2851,7 +2907,7 @@ async function acAutoCut() {
   el.innerHTML = acAutoCuts.map((c,i) => `<div style="background:var(--surface2);border-radius:8px;padding:.6rem .8rem;margin-bottom:.5rem;font-size:.83rem"><strong style="color:var(--accent)">${c.label}</strong> <span style="color:var(--muted)">${fmtTime(c.start)} → ${fmtTime(c.end)}</span> <span class="badge badge-accent">${c.duration.toFixed(1)}s</span></div>`).join('');
   document.getElementById('ac-export-row').style.display='flex';
 
-  const file = document.getElementById('ac-video-input').files[0];
+  const file = currentVideo;
   if(!file) return;
   const formData = new FormData();
   formData.append('file', file);
@@ -2881,13 +2937,7 @@ function fmtTime(s) { const m=Math.floor(s/60); return `${m}:${(s%60).toFixed(2)
 // ══════════════════════════════════════════════════════════════
 let audioCtx=null, audioSource=null, audioChain=[], selectedEffect=null, analyserNode=null, analyserRAF=null;
 
-document.getElementById('audio-upload-zone').onclick = () => document.getElementById('audio-file-input').click();
-document.getElementById('audio-file-input').onchange = function() {
-  const f = this.files[0]; if (!f) return;
-  const url = URL.createObjectURL(f);
-  if (f.type.startsWith('video/')) { document.getElementById('audio-video-player').src=url; document.getElementById('audio-video-player').style.display='block'; document.getElementById('audio-player').style.display='none'; }
-  else { document.getElementById('audio-player').src=url; document.getElementById('audio-player').style.display='block'; document.getElementById('audio-video-player').style.display='none'; }
-};
+// Audio upload zone removed
 
 const EFFECT_DEFS = {
   volume: { label:'Volume', params:[{id:'gain',label:'Gain',min:0,max:3,step:.01,default:1}] },
@@ -2928,7 +2978,7 @@ function audioRemoveEffect() { audioChain=audioChain.filter(x=>x.id!==selectedEf
 function audioSavePreset() { const data={chain:audioChain}; const a=document.createElement('a'); a.download='audio_preset.json'; a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2)); a.click(); }
 
 async function audioRenderVideoEffect() {
-  const file = document.getElementById('audio-file-input').files[0];
+  const file = currentVideo;
   if(!file) return alert('Upload an audio/video file first');
   const formData = new FormData();
   formData.append('file', file);
@@ -2950,8 +3000,14 @@ function audioPlayWithEffects() {
   const vEl = document.getElementById('audio-video-player').style.display!=='none' ? document.getElementById('audio-video-player') : document.getElementById('audio-player');
   if (!vEl.src) return alert('Upload an audio/video file first.');
   if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if (audioSource) { try{audioSource.disconnect();}catch(e){} }
-  audioSource = audioCtx.createMediaElementSource(vEl);
+  
+  window.__audioSourceNodes = window.__audioSourceNodes || new WeakMap();
+  if (!window.__audioSourceNodes.has(vEl)) {
+     window.__audioSourceNodes.set(vEl, audioCtx.createMediaElementSource(vEl));
+  }
+  audioSource = window.__audioSourceNodes.get(vEl);
+  try{ audioSource.disconnect(); }catch(e){}
+  
   let node = audioSource;
   analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize=128;
   audioChain.filter(e=>!e.bypassed).forEach(e => {
@@ -2996,13 +3052,7 @@ function drawAnalyser() {
 let kfData={opacity:[],positionX:[],positionY:[],scale:[],rotation:[],blur:[]};
 let kfProp='opacity', kfSelected=null, kfZoom=1, kfGraphDuration=5000;
 
-document.getElementById('kf-upload-zone').onclick = () => document.getElementById('kf-video-input').click();
-document.getElementById('kf-video-input').onchange = function() {
-  const f = this.files[0]; if (!f) return;
-  const v = document.getElementById('kf-video-preview');
-  v.src = URL.createObjectURL(f); v.style.display = 'block';
-  document.getElementById('kf-upload-label').textContent = f.name;
-};
+// KF upload zone removed
 
 function kfSelectProperty() { kfProp=document.getElementById('kf-property').value; kfRenderTimeline(); kfRenderGraph(); }
 
@@ -3055,6 +3105,15 @@ function kfUpdateSelected(){
   kfData[kfProp].sort((a,b)=>a.time-b.time);
   kfRenderTimeline(); kfRenderGraph(); kfRenderList();
 }
+
+function kfLoadPreset(type) {
+  kfGraphDuration = 3000;
+  if(type === 'fade'){ document.getElementById('kf-property').value='opacity'; kfProp='opacity'; kfData[kfProp] = [{time:0, value:1, easing:'linear'}, {time:3000, value:0, easing:'easeOut'}]; }
+  if(type === 'zoom'){ document.getElementById('kf-property').value='scale'; kfProp='scale'; kfData[kfProp] = [{time:0, value:1, easing:'linear'}, {time:3000, value:1.5, easing:'easeInOut'}]; }
+  if(type === 'spin'){ document.getElementById('kf-property').value='rotation'; kfProp='rotation'; kfData[kfProp] = [{time:0, value:0, easing:'linear'}, {time:3000, value:360, easing:'easeInOut'}]; }
+  kfSelected = kfData[kfProp][0];
+  kfShowInspector(); kfRenderTimeline(); kfRenderGraph(); kfRenderList();
+}
 function kfSetEasing(e){document.getElementById('kf-easing').value=e; if(kfSelected){kfSelected.easing=e; kfRenderGraph();}}
 function kfDelete(){if(!kfSelected)return; kfData[kfProp]=kfData[kfProp].filter(k=>k!==kfSelected); kfSelected=null; kfShowInspector(); kfRenderTimeline(); kfRenderGraph(); kfRenderList();}
 function kfPrev(){const kfs=kfData[kfProp];if(!kfs.length)return;const i=kfs.indexOf(kfSelected);kfSelected=kfs[Math.max(0,i-1)];kfShowInspector();kfRenderTimeline();}
@@ -3067,10 +3126,8 @@ async function kfApplyToVideo() {
   const kfs = kfData[kfProp];
   if(!kfs || kfs.length === 0) return alert('Add some keyframes first.');
   
-  // Try dedicated upload first, then fall back to global currentVideo
-  const kfFileInput = document.getElementById('kf-video-input');
-  let videoFile = (kfFileInput && kfFileInput.files[0]) ? kfFileInput.files[0] : currentVideo;
-  if(!videoFile) return alert('Please upload a video in the Keyframes tab (or select a video in the main editor first).');
+  let videoFile = currentVideo;
+  if(!videoFile) return alert('Please upload a video in the main editor first.');
   
   const formData = new FormData();
   formData.append('file', videoFile);
@@ -3126,19 +3183,12 @@ function kfRenderList(){
 // ══════════════════════════════════════════════════════════════
 let mbVideo, mbCanvas, mbCtx, mbFrameCaptured=false;
 
-document.getElementById('mb-upload-zone').onclick = () => document.getElementById('mb-video-input').click();
-document.getElementById('mb-video-input').onchange = function() {
-  const f=this.files[0]; if(!f)return;
-  mbVideo=document.getElementById('mb-video'); mbVideo.src=URL.createObjectURL(f); mbVideo.style.display='block';
-  mbCanvas=document.getElementById('mb-canvas'); mbCtx=mbCanvas.getContext('2d');
-  mbVideo.onloadeddata=()=>{mbVideo.currentTime=1; mbPreview();};
-  document.getElementById('mb-no-video').textContent='';
-};
+// MB upload zone removed
 function mbUpdateVal(el,spanId,suffix){document.getElementById(spanId).textContent=el.value+suffix;}
 function mbReset(){document.getElementById('mb-dir').value=0;document.getElementById('mb-strength').value=40;document.getElementById('mb-thresh').value=20;document.getElementById('mb-dir-val').textContent='0°';document.getElementById('mb-str-val').textContent='40%';document.getElementById('mb-thresh-val').textContent='20%';mbPreview();}
 
 async function mbApplyToVideo() {
-  const file = document.getElementById('mb-video-input').files[0];
+  const file = currentVideo;
   if(!file) return alert('Upload a video first.');
   const formData = new FormData();
   formData.append('file', file);
@@ -3165,14 +3215,13 @@ function mbPreview(){
   const dir=+document.getElementById('mb-dir').value;
   const samples=+document.getElementById('mb-samples').value;
   // Simulate motion blur via multiple draw passes with offset
-  const imgData=mbCtx.getImageData(0,0,mbCanvas.width,mbCanvas.height);
   mbCtx.globalAlpha=1/samples;
   const rad=dir*(Math.PI/180);
   for(let i=1;i<samples;i++){
     const dx=Math.cos(rad)*str*i*3;
     const dy=type==='radial'? Math.sin(rad)*str*i*3 : (dir>180?str*i*2:0);
     if(type==='zoom'){const s=1+str*i*.02;mbCtx.save();mbCtx.translate(mbCanvas.width/2,mbCanvas.height/2);mbCtx.scale(s,s);mbCtx.translate(-mbCanvas.width/2,-mbCanvas.height/2);mbCtx.drawImage(mbVideo,0,0,mbCanvas.width,mbCanvas.height);mbCtx.restore();}
-    else {mbCtx.putImageData(imgData,dx,dy);}
+    else {mbCtx.drawImage(mbVideo,dx,dy,mbCanvas.width,mbCanvas.height);}
   }
   mbCtx.globalAlpha=1;
 }
@@ -3182,15 +3231,11 @@ function mbPreview(){
 // ══════════════════════════════════════════════════════════════
 let saVideo, saAnalysisData=null;
 
-document.getElementById('sa-upload-zone').onclick = () => document.getElementById('sa-video-input').click();
-document.getElementById('sa-video-input').onchange = function() {
-  const f=this.files[0]; if(!f)return;
-  saVideo=document.getElementById('sa-video'); saVideo.src=URL.createObjectURL(f); saVideo.style.display='block';
-};
+// SA upload zone removed
 
 async function saAnalyze() {
   if(!saVideo||!saVideo.src) return alert('Upload a video first.');
-  const file = document.getElementById('sa-video-input').files[0];
+  const file = currentVideo;
   if(!file) return alert('No file');
 
   const progressWrap=document.getElementById('sa-progress-wrap');
@@ -3227,8 +3272,8 @@ async function saAnalyze() {
            rhythm: data.pacing.label || 'moderate'
          },
          colorGrading: {
-           palette: data.palette,
-           temperature: data.color_temperature || 'neutral',
+           palette: data.color ? data.color.palette : (data.palette || []),
+           temperature: (data.color ? data.color.temperature : data.color_temperature) || 'neutral',
            saturation: 'medium'
          },
          styleScore: {

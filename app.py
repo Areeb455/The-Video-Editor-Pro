@@ -558,7 +558,7 @@ def resize_video_ffmpeg(input_path, output_path, width, height):
     try:
         cmd = [
             'ffmpeg', '-i', input_path,
-            '-vf', f'scale={width}:{height}',
+            '-vf', f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2',
             '-c:v', 'libx264',
             '-preset', 'medium',
             '-crf', '23',
@@ -1947,7 +1947,7 @@ def resize_video():
         # FFmpeg command for resizing
         cmd = [
             'ffmpeg', '-i', input_path,
-            '-vf', f'scale={width}:{height}',
+            '-vf', f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2',
             '-c:v', 'libx264',
             '-c:a', 'aac',
             '-crf', '18',
@@ -2240,7 +2240,7 @@ def apply_color_grading():
             # Increase contrast and saturation for cinematic look
             cmd = [
                 'ffmpeg', '-i', input_path,
-                '-vf', 'eq=contrast=1.2:saturation=1.1:brightness=0.05',
+                '-vf', 'eq=contrast=1.5:saturation=1.5:brightness=0.05',
                 '-c:v', 'libx264', '-preset', 'medium', '-crf', '18',
                 '-c:a', 'aac', '-movflags', '+faststart', '-y', output_path
             ]
@@ -3610,8 +3610,8 @@ def execute_resize_command(prompt, main_path, timestamp):
     # Use existing resize logic
     cmd = [
         'ffmpeg', '-i', main_path,
-        '-vf', f'scale={width}:{height}',
-        '-c:v', 'libx264',
+        '-vf', f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2',
+            '-c:v', 'libx264',
         '-c:a', 'aac',
         '-crf', '18',
         '-preset', 'fast',
@@ -5221,304 +5221,40 @@ def search_youtube_clips():
 @app.route('/download-youtube-clip', methods=['POST'])
 @login_required
 def download_youtube_clip():
-    """Download a YouTube clip using yt-dlp - Same approach as Dailymotion."""
-    print(f"Debug - download_youtube_clip function called.")
     try:
-        # Check if user is authenticated
         if not current_user.is_authenticated:
-            return jsonify({
-                'success': False,
-                'error': 'Authentication required',
-                'redirect': url_for('login')
-            }), 401
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
 
         data = request.get_json()
         if not data or 'video_id' not in data:
             return jsonify({'success': False, 'error': 'No video ID provided'})
 
         video_id = data['video_id']
-        print(f"Debug - Downloading YouTube video ID: {video_id} using yt-dlp")
-
-        # Generate output filename
         output_filename = f'youtube_{video_id}_{int(time.time())}.mp4'
         output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_filename)
+        url = f'https://www.youtube.com/watch?v={video_id}'
 
-        # Advanced YouTube configurations to bypass bot detection
-        youtube_configs = [
-            {
-                'name': 'Android TV Client',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 3,
-                    'sleep_interval_requests': 3,  # Add delays to avoid bot detection
-                    'sleep_interval_subtitles': 3,
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['android_tv'],
-                            'skip': ['dash', 'hls']
-                        }
-                    },
-                    'http_headers': {
-                        'User-Agent': 'com.google.android.tv.youtube/2.12.08 (Linux; U; Android 9; SM-T720) gzip'
-                    }
-                }
-            },
-            {
-                'name': 'iOS Client',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 3,
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['ios'],
-                            'skip': ['dash', 'hls']
-                        }
-                    },
-                    'http_headers': {
-                        'User-Agent': 'com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)'
-                    }
-                }
-            },
-            {
-                'name': 'Android Embedded',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 3,
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['android_embedded'],
-                            'skip': ['dash', 'hls']
-                        }
-                    }
-                }
-            },
-            {
-                'name': 'Web Embedded',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 3,
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['web_embedded'],
-                            'skip': ['dash', 'hls']
-                        }
-                    }
-                }
-            },
-            {
-                'name': 'Android Music',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 3,
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['android_music'],
-                            'skip': ['dash', 'hls']
-                        }
-                    }
-                }
-            },
-            {
-                'name': 'Generic Extractor',
-                'opts': {
-                    'format': 'worst[ext=mp4]/worst',
-                    'outtmpl': output_path,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'socket_timeout': 60,
-                    'retries': 2,
-                    'force_generic_extractor': True,  # Use generic extractor as last resort
-                    'sleep_interval_requests': 5,     # Longer delays
-                }
-            }
-        ]
+        import sys, subprocess
+        command = [sys.executable, '-m', 'yt_dlp', '-o', output_path, '--format', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '--no-warnings', '--no-check-certificate', url]
+        
+        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0 or not os.path.exists(output_path):
+            return jsonify({'success': False, 'error': f'Failed to download video.'})
 
-        # Try each configuration until one works
-        download_success = False
-        last_error = None
-        
-        for config in youtube_configs:
-            try:
-                print(f"Debug - Trying YouTube {config['name']}")
-                
-                with yt_dlp.YoutubeDL(config['opts']) as ydl:
-                    # Try different URL formats to bypass restrictions
-                    urls_to_try = [
-                        f'https://www.youtube.com/watch?v={video_id}',
-                        f'https://youtube.com/watch?v={video_id}',
-                        f'https://m.youtube.com/watch?v={video_id}',
-                        f'https://www.youtube.com/embed/{video_id}',
-                    ]
-                    
-                    for url in urls_to_try:
-                        try:
-                            print(f"Debug - Trying URL: {url}")
-                            ydl.download([url])
-                            
-                            # Check if download was successful
-                            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                                print(f"Debug - Successfully downloaded with {config['name']} using {url}")
-                                download_success = True
-                                break
-                                
-                        except Exception as url_error:
-                            print(f"Debug - URL {url} failed: {str(url_error)}")
-                            # Clean up any partial download
-                            if os.path.exists(output_path):
-                                try:
-                                    os.remove(output_path)
-                                except:
-                                    pass
-                            continue
-                    
-                    if download_success:
-                        break
-                        
-            except Exception as e:
-                print(f"Debug - {config['name']} failed: {str(e)}")
-                last_error = str(e)
-                # Clean up any partial download
-                if os.path.exists(output_path):
-                    try:
-                        os.remove(output_path)
-                    except:
-                        pass
-                continue
-        
-        if not download_success:
-            print(f"Debug - All yt-dlp methods failed, trying alternative approach")
-            
-            # Final fallback: Try to get video info and use alternative download
-            try:
-                # Try to get video info using the most basic configuration
-                basic_opts = {
-                    'quiet': True,
-                    'no_warnings': True,
-                    'extract_flat': False,
-                    'force_generic_extractor': True,
-                }
-                
-                with yt_dlp.YoutubeDL(basic_opts) as ydl:
-                    info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
-                    
-                    if info and 'url' in info:
-                        print(f"Debug - Found direct video URL, attempting direct download")
-                        
-                        # Try direct HTTP download
-                        response = requests.get(info['url'], stream=True, timeout=60)
-                        response.raise_for_status()
-                        
-                        with open(output_path, 'wb') as f:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                if chunk:
-                                    f.write(chunk)
-                        
-                        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                            print(f"Debug - Successfully downloaded via direct HTTP")
-                            download_success = True
-                        
-            except Exception as fallback_error:
-                print(f"Debug - Fallback method also failed: {str(fallback_error)}")
-                last_error = str(fallback_error)
-        
-        if not download_success:
-            print(f"Debug - All YouTube download methods failed")
-            return jsonify({'success': False, 'error': f'Failed to download YouTube video. This video may be restricted or require authentication. Last error: {last_error}'})
-        
-        print(f"Debug - YouTube video downloaded successfully")
-        
-        # Verify the downloaded file
-        if not os.path.exists(output_path):
-            print(f"Debug - Output file not found after download at {output_path}")
-            return jsonify({'success': False, 'error': 'Failed to download video: Output file not created.'})
-
-        if os.path.getsize(output_path) == 0:
-            print(f"Debug - Downloaded file is empty at {output_path}")
-            os.remove(output_path)
-            return jsonify({'success': False, 'error': 'Downloaded video file is empty.'})
-
-        print(f"Debug - Successfully downloaded YouTube clip to {output_path}")
-
-        # Re-encode video for browser compatibility using FFmpeg (same as Dailymotion)
         try:
-            print(f"Debug - Re-encoding downloaded YouTube clip for browser compatibility: {output_path}")
-            
-            # Define temporary re-encoded path
-            reencoded_filename = f'reencoded_youtube_{int(time.time())}.mp4'
-            reencoded_path = os.path.join(app.config['OUTPUT_FOLDER'], reencoded_filename)
-
-            print(f"Debug - Re-encoding YouTube clip to: {reencoded_path}")
-            
-            # Use FFmpeg to re-encode for browser compatibility
-            cmd = [
-                'ffmpeg', '-y',
-                '-i', output_path,
-                '-c:v', 'libx264',
-                '-c:a', 'aac',
-                '-b:v', '3000k',  # Video bitrate
-                '-crf', '23',     # Constant Rate Factor
-                '-preset', 'medium',
-                '-movflags', '+faststart',  # For faster web playback
-                '-pix_fmt', 'yuv420p',      # Essential for broad browser compatibility
-                reencoded_path
-            ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            if result.returncode != 0:
-                print(f"Debug - FFmpeg re-encoding error: {result.stderr}")
-                raise Exception(f"FFmpeg re-encoding failed: {result.stderr}")
-            
-            # Remove the original downloaded file and use re-encoded version
-            os.remove(output_path)
-            output_filename = reencoded_filename
-            print(f"Debug - Successfully re-encoded YouTube clip to: {output_filename}")
-            
-        except subprocess.TimeoutExpired:
-            print(f"Debug - FFmpeg timeout during YouTube re-encoding")
-            if os.path.exists(output_path): 
+            browser_path = os.path.join(app.config['OUTPUT_FOLDER'], f'browser_{output_filename}')
+            cmd = ['ffmpeg', '-y', '-i', output_path, '-c:v', 'libx264', '-preset', 'fast', '-crf', '26', '-c:a', 'aac', browser_path]
+            succ, msg = run_ffmpeg_command(cmd)
+            if succ and os.path.exists(browser_path):
                 os.remove(output_path)
-            return jsonify({'success': False, 'error': 'Video re-encoding timeout'})
-        except Exception as e:
-            print(f"Debug - Error during YouTube re-encoding: {str(e)}")
-            if os.path.exists(output_path): 
-                os.remove(output_path)
-            return jsonify({'success': False, 'error': f'Error re-encoding video for browser: {str(e)}'})
+                os.rename(browser_path, output_path)
+        except Exception:
+            pass
 
-        return jsonify({
-            'success': True,
-            'filename': output_filename,  # Return the re-encoded filename
-            'video_id': video_id  # Also return video_id for easier matching
-        })
+        return jsonify({'success': True, 'filename': output_filename, 'url': f'/output/{output_filename}'})
 
     except Exception as e:
-        print(f"Debug - General error in download_youtube_clip: {str(e)}")
-        if 'output_path' in locals() and os.path.exists(output_path):
-            try:
-                os.remove(output_path)
-            except: # nosec
-                pass
-        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'})
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/add-youtube-to-video', methods=['POST'])
 @login_required
@@ -6610,217 +6346,51 @@ def add_dailymotion_to_video():
 @app.route('/download_youtube', methods=['POST'])
 @login_required
 def download_youtube():
-    """
-    Download a YouTube video using yt-dlp with cookies file support.
-    Enhanced version integrated with existing video processing pipeline.
-    """
     try:
-        # Check if user is authenticated
         if not current_user.is_authenticated:
-            return jsonify({
-                'success': False,
-                'error': 'Authentication required',
-                'redirect': url_for('login')
-            }), 401
-
-        # Get request data (support both JSON and form data)
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        
         if request.is_json:
             data = request.get_json()
-            url = data.get("url") if data else None
+            url = data.get("url")
         else:
             url = request.form.get("url")
 
-        if not url:
-            return jsonify({
-                'success': False,
-                'error': 'Missing YouTube URL'
-            }), 400
+        if not url: return jsonify({'success': False, 'error': 'Missing YouTube URL'}), 400
 
-        print(f"Debug - Downloading YouTube video from URL: {url}")
-
-        # Create downloads directory if it doesn't exist
         downloads_dir = os.path.join(app.config['OUTPUT_FOLDER'], 'downloads')
         os.makedirs(downloads_dir, exist_ok=True)
-
-        # Generate unique filename
         timestamp = int(time.time())
         output_filename = f'youtube_download_{timestamp}.%(ext)s'
         output_path = os.path.join(downloads_dir, output_filename)
 
-        # Advanced anti-bot bypass techniques with multiple fallback methods
+        import sys, subprocess
+        command = [sys.executable, '-m', 'yt_dlp', '-o', output_path, '--format', 'best[ext=mp4]/best', '--merge-output-format', 'mp4', '--no-warnings', '--no-playlist', '--no-check-certificate', '--extractor-args', 'youtube:player_client=android', url]
         
-        # Try multiple bypass strategies in order of preference
-        bypass_strategies = [
-            # Strategy 1: Browser cookies (most effective)
-            {
-                "cookies": ["--cookies-from-browser", "chrome"],
-                "description": "Chrome browser cookies"
-            },
-            # Strategy 2: Firefox cookies fallback
-            {
-                "cookies": ["--cookies-from-browser", "firefox"],
-                "description": "Firefox browser cookies"
-            },
-            # Strategy 3: Edge cookies fallback
-            {
-                "cookies": ["--cookies-from-browser", "edge"],
-                "description": "Edge browser cookies"
-            },
-            # Strategy 4: No cookies but enhanced headers
-            {
-                "cookies": [],
-                "description": "Enhanced headers only"
-            }
-        ]
-        
-        # Try each strategy until one works
-        for strategy in bypass_strategies:
-            print(f"Trying YouTube download with: {strategy['description']}")
-            
-            # Build yt-dlp command with comprehensive bypass options
-            command = [
-                "yt-dlp",
-                "-o", output_path,
-                "--format", "best[ext=mp4]/best",  # Prefer MP4 format
-                "--merge-output-format", "mp4",   # Ensure MP4 output
-                "--no-warnings",
-                "--no-playlist",  # Don't download playlists, just single video
-                
-                # Anti-bot detection measures
-                "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "--referer", "https://www.youtube.com/",
-                "--add-header", "Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "--add-header", "Accept-Language:en-US,en;q=0.5",
-                "--add-header", "Accept-Encoding:gzip, deflate, br",
-                "--add-header", "DNT:1",
-                "--add-header", "Connection:keep-alive",
-                "--add-header", "Upgrade-Insecure-Requests:1",
-                "--add-header", "Sec-Fetch-Dest:document",
-                "--add-header", "Sec-Fetch-Mode:navigate",
-                "--add-header", "Sec-Fetch-Site:none",
-                "--add-header", "Sec-Fetch-User:?1",
-                
-                # Network and retry settings
-                "--socket-timeout", "30",
-                "--retries", "3",
-                "--fragment-retries", "3",
-                "--retry-sleep", "linear=1::2",
-                
-                # Geo and proxy bypass
-                "--geo-bypass",
-                "--geo-bypass-country", "US",
-                
-                # Additional bypass options
-                "--no-check-certificate",
-                "--prefer-insecure",
-                "--sleep-interval", "1",
-                "--max-sleep-interval", "3",
-                
-                # YouTube specific bypasses
-                "--extractor-args", "youtube:player_client=android",
-            ]
-            
-            # Add cookies if this strategy uses them
-            if strategy["cookies"]:
-                command.extend(strategy["cookies"])
-            
-            # Add the URL at the end
-            command.append(url)
-            
-            try:
-                # Execute the command
-                result = subprocess.run(command, capture_output=True, text=True, timeout=300)
-                
-                if result.returncode == 0:
-                    print(f"✅ Success with {strategy['description']}")
-                    break  # Success, exit the strategy loop
-                else:
-                    print(f"❌ Failed with {strategy['description']}: {result.stderr}")
-                    if strategy == bypass_strategies[-1]:  # Last strategy
-                        raise Exception(f"All bypass strategies failed. Last error: {result.stderr}")
-                    continue  # Try next strategy
-                    
-            except subprocess.TimeoutExpired:
-                print(f"⏰ Timeout with {strategy['description']}")
-                if strategy == bypass_strategies[-1]:
-                    raise Exception("Download timeout after trying all strategies")
-                continue
-            except Exception as e:
-                print(f"💥 Error with {strategy['description']}: {str(e)}")
-                if strategy == bypass_strategies[-1]:
-                    raise Exception(f"All strategies failed: {str(e)}")
-                continue
-        # Strategy loop completed - if we reach here, one strategy succeeded
+        result = subprocess.run(command, capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            return jsonify({'success': False, 'error': f'yt-dlp failed: {result.stderr}'}), 500
 
-        # Find the actual downloaded file
-        downloaded_files = []
-        for file in os.listdir(downloads_dir):
-            if file.startswith(f'youtube_download_{timestamp}'):
-                downloaded_files.append(file)
-
+        # Find the actual downloaded file since %(ext)s was used
+        downloaded_files = [f for f in os.listdir(downloads_dir) if f.startswith(f'youtube_download_{timestamp}')]
         if not downloaded_files:
-            return jsonify({
-                'success': False,
-                'error': 'Video downloaded but file not found',
-                'output': result.stdout
-            }), 500
-
-        # Get the first (and should be only) downloaded file
+            return jsonify({'success': False, 'error': 'Video downloaded but file not found'}), 500
+            
         actual_filename = downloaded_files[0]
         actual_path = os.path.join(downloads_dir, actual_filename)
-
-        # Verify file exists and has content
-        if not os.path.exists(actual_path) or os.path.getsize(actual_path) == 0:
-            return jsonify({
-                'success': False,
-                'error': 'Downloaded file is empty or corrupted'
-            }), 500
-
         file_size = os.path.getsize(actual_path)
-        print(f"Debug - Successfully downloaded: {actual_filename} ({file_size} bytes)")
-
+        
         return jsonify({
             'success': True,
             'message': 'Video downloaded successfully!',
             'filename': actual_filename,
             'file_size': file_size,
             'download_path': f'/downloads/{actual_filename}',
-            'output': result.stdout[:500] + '...' if len(result.stdout) > 500 else result.stdout
+            'output': 'Success'
         })
 
-    except subprocess.TimeoutExpired as e:
-        print(f"Debug - yt-dlp timeout for URL: {url}")
-        return jsonify({
-            'success': False,
-            'error': 'Download timeout - video may be too large or connection is slow'
-        }), 500
-
-    except subprocess.CalledProcessError as e:
-        print(f"Debug - yt-dlp error for URL {url}: {e.stderr}")
-        
-        # Provide more specific error messages
-        error_msg = "Failed to download video"
-        if "Video unavailable" in e.stderr:
-            error_msg = "Video is unavailable or private"
-        elif "Sign in to confirm your age" in e.stderr:
-            error_msg = "Video requires age verification"
-        elif "Private video" in e.stderr:
-            error_msg = "Video is private"
-        elif "This video is not available" in e.stderr:
-            error_msg = "Video is not available in your region"
-
-        return jsonify({
-            'success': False,
-            'error': error_msg,
-            'details': e.stderr[:200] + '...' if len(e.stderr) > 200 else e.stderr
-        }), 500
-
     except Exception as e:
-        print(f"Debug - Unexpected error in download_youtube: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': f'Unexpected error: {str(e)}'
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/downloads/<filename>')
 @login_required
@@ -6903,73 +6473,58 @@ def apply_mask():
 
     # Build FFmpeg drawbox/drawtext filter chain from mask list
     # Canvas is 480x280 (as set in initMaskCanvas); map to video coords via iw/ih
-    CANVAS_W = 480.0
-    CANVAS_H = 280.0
-    vf_parts = []
+
+    # Create mask using Python Pillow
+    from PIL import Image, ImageDraw
+
+    # First query video resolution
+    vid_info = get_video_info(input_path)
+    streams = vid_info.get('streams', [])
+    v_stream = next((s for s in streams if s['codec_type'] == 'video'), None)
+    W = int(v_stream.get('width', 1920)) if v_stream else 1920
+    H = int(v_stream.get('height', 1080)) if v_stream else 1080
+    if W == 0 or H == 0:
+        W, H = 1920, 1080
+
+    mask_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(mask_img)
+
     for m in masks_list:
         color_hex = m.get('color', '#6c63ff').lstrip('#')
         opacity = float(m.get('opacity', 0.7))
+        alpha = int(opacity * 255)
+        r = int(color_hex[0:2], 16)
+        g = int(color_hex[2:4], 16)
+        b = int(color_hex[4:6], 16)
+
         mtype = m.get('type', 'rect')
-        
         if mtype == 'rect':
-            # x, y, w, h in canvas pixels — map to video relative coords
-            cx = float(m.get('x', 0))
-            cy = float(m.get('y', 0))
-            cw = float(m.get('w', CANVAS_W / 2))
-            ch = float(m.get('h', CANVAS_H / 2))
-            # Handle negative width/height (drawn right-to-left or bottom-to-top)
-            if cw < 0:
-                cx += cw
-                cw = abs(cw)
-            if ch < 0:
-                cy += ch
-                ch = abs(ch)
-            x_expr = f'iw*{cx/CANVAS_W:.4f}'
-            y_expr = f'ih*{cy/CANVAS_H:.4f}'
-            w_expr = f'iw*{cw/CANVAS_W:.4f}'
-            h_expr = f'ih*{ch/CANVAS_H:.4f}'
-            vf_parts.append(f'drawbox=x={x_expr}:y={y_expr}:w={w_expr}:h={h_expr}:color={color_hex}@{opacity:.2f}:t=fill')
-        
+            cx, cy = float(m.get('x',0)), float(m.get('y',0))
+            cw, ch = float(m.get('w',0)), float(m.get('h',0))
+            x1, y1 = (cx / 480.0) * W, (cy / 280.0) * H
+            x2, y2 = ((cx+cw) / 480.0) * W, ((cy+ch) / 280.0) * H
+            draw.rectangle([min(x1,x2), min(y1,y2), max(x1,x2), max(y1,y2)], fill=(r,g,b,alpha))
         elif mtype == 'circle':
-            # cx, cy, rx, ry from canvas
-            ccx = float(m.get('cx', CANVAS_W / 2))
-            ccy = float(m.get('cy', CANVAS_H / 2))
-            rx = float(m.get('rx', 80))
-            ry = float(m.get('ry', 60))
-            # Use drawbox as a rectangle approximation (FFmpeg has no native ellipse draw filter)
-            x_expr = f'iw*{(ccx - rx)/CANVAS_W:.4f}'
-            y_expr = f'ih*{(ccy - ry)/CANVAS_H:.4f}'
-            w_expr = f'iw*{(rx * 2)/CANVAS_W:.4f}'
-            h_expr = f'ih*{(ry * 2)/CANVAS_H:.4f}'
-            vf_parts.append(f'drawbox=x={x_expr}:y={y_expr}:w={w_expr}:h={h_expr}:color={color_hex}@{opacity:.2f}:t=fill')
-        
+            ccx, ccy = float(m.get('cx',0)), float(m.get('cy',0))
+            rx, ry = float(m.get('rx',0)), float(m.get('ry',0))
+            x1, y1 = ((ccx - rx) / 480.0) * W, ((ccy - ry) / 280.0) * H
+            x2, y2 = ((ccx + rx) / 480.0) * W, ((ccy + ry) / 280.0) * H
+            draw.ellipse([x1, y1, x2, y2], fill=(r,g,b,alpha))
         else:
-            # Freehand / polygon — use bounding box
             pts = m.get('pts', [])
             if pts:
-                xs = [p.get('x', 0) for p in pts]
-                ys = [p.get('y', 0) for p in pts]
-                x0, y0 = min(xs), min(ys)
-                x1, y1 = max(xs), max(ys)
-                x_expr = f'iw*{x0/CANVAS_W:.4f}'
-                y_expr = f'ih*{y0/CANVAS_H:.4f}'
-                w_expr = f'iw*{(x1-x0)/CANVAS_W:.4f}'
-                h_expr = f'ih*{(y1-y0)/CANVAS_H:.4f}'
-                vf_parts.append(f'drawbox=x={x_expr}:y={y_expr}:w={w_expr}:h={h_expr}:color={color_hex}@{opacity:.2f}:t=fill')
-    
-    if not vf_parts:
-        vf_parts = [f'drawbox=x=iw/4:y=ih/4:w=iw/2:h=ih/2:color=6c63ff@0.7:t=fill']
-    
-    # Chain all drawbox filters with comma
-    vf_filter = ','.join(vf_parts)
-    
+                mapped_pts = [((p.get('x',0) / 480.0) * W, (p.get('y',0) / 280.0) * H) for p in pts]
+                draw.polygon(mapped_pts, fill=(r,g,b,alpha))
+
+    mask_path = os.path.join(app.config['UPLOAD_FOLDER'], f"mask_img_{timestamp}.png")
+    mask_img.save(mask_path)
+
     cmd = [
-        'ffmpeg', '-y', '-i', input_path,
-        '-vf', vf_filter,
-        '-c:a', 'copy', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23',
-        output_path
+        'ffmpeg', '-y', '-i', input_path, '-i', mask_path,
+        '-filter_complex', '[0:v][1:v]overlay=0:0',
+        '-c:v', 'libx264', '-preset', 'fast', '-crf', '23',
+        '-c:a', 'copy', output_path
     ]
-    
     success, msg = run_ffmpeg_command(cmd)
     cleanup_files([input_path])
     if success:
@@ -7033,7 +6588,7 @@ def auto_cut():
                 ]
                 if run_ffmpeg_command(cmd)[0]:
                     temp_files.append(chunk_path)
-                    f.write(f"file '{chunk_path}'\n")
+                    f.write(f"file '{chunk_path.replace('\\', '/')}'\n")
                     chunks_written += 1
         
         if chunks_written == 0:
@@ -7174,58 +6729,57 @@ def apply_keyframes():
         # Sort keyframes by time (time is in ms)
         keyframes = sorted(keyframes, key=lambda k: float(k.get('time', 0)))
         
-        if prop == 'opacity':
-            # Implement opacity via fade effects
-            # Use multiple fade in/out segments
-            fade_parts = []
-            for i, kf in enumerate(keyframes):
-                t_sec = float(kf.get('time', 0)) / 1000.0
-                val = float(kf.get('value', 1.0))
-                # Clamp 0-1
-                val = max(0.0, min(1.0, val))
-                if i == 0 and val < 1.0:
-                    fade_parts.append(f"fade=t=in:st=0:d={t_sec:.2f}:alpha=1")
-                elif i == len(keyframes) - 1 and val < 1.0:
-                    fade_parts.append(f"fade=t=out:st={t_sec:.2f}:d=1:alpha=1")
-            if fade_parts:
-                vf_filter = ','.join(fade_parts) if len(fade_parts) > 1 else fade_parts[0]
-            else:
-                vf_filter = "null"  # No-op
+        # Advanced temporal formulas for animations across all keyframes using sendcmd or 't' evaluate!
+        # The previous approach only grabbed first and last.
+        # Using 't' variables to do linear interpolation over multiples:
+        # We'll construct an IF chain in FFmpeg Math
+        t_var = 'in_time' if prop == 'scale' else 't' # zoompan prefers 'in_time' or 'time'
+        exprs = []
+        for i in range(len(keyframes) - 1):
+            k1 = keyframes[i]
+            k2 = keyframes[i+1]
+            t1 = float(k1.get('time', 0)) / 1000.0
+            t2 = float(k2.get('time', 0)) / 1000.0
+            v1 = float(k1.get('value', 0))
+            v2 = float(k2.get('value', 0))
+            if t2 > t1:
+                slope = (v2 - v1) / (t2 - t1)
+                eq = f"({v1}+({slope})*({t_var}-{t1}))"
+                cond = f"between({t_var},{t1},{t2})"
+                exprs.append(f"if({cond},{eq},")
                 
-        elif prop == 'scale':
-            # Build zoompan from scale keyframes
-            # Take first and last scale values
-            start_scale = float(keyframes[0].get('value', 1.0))
-            end_scale = float(keyframes[-1].get('value', 1.0))
-            duration_ms = float(keyframes[-1].get('time', 5000))
-            total_frames = int((duration_ms / 1000.0) * 30)  # assume 30fps
-            if total_frames < 1:
-                total_frames = 125
-            z_expr = f"'if(lte(zoom,{start_scale:.3f}),{start_scale:.3f},zoom+{(end_scale - start_scale) / total_frames:.6f})'"
-            vf_filter = f"zoompan=z={z_expr}:d={total_frames}:s=iw'x'ih"
-            
-        elif prop == 'blur':
-            # Animated blur using boxblur
-            start_blur = float(keyframes[0].get('value', 0))
-            end_blur = float(keyframes[-1].get('value', 5))
-            avg_blur = (start_blur + end_blur) / 2.0
-            if avg_blur > 0:
-                vf_filter = f"boxblur={avg_blur:.1f}:{avg_blur:.1f}"
-            else:
-                vf_filter = "null"
-                
-        elif prop == 'rotation':
-            # Apply rotation (fixed angle from first keyframe)
-            angle = float(keyframes[0].get('value', 0))
-            angle_rad = angle * 3.14159 / 180.0
-            vf_filter = f"rotate={angle_rad:.4f}"
-            
+        if exprs:
+            # Cap the expression
+            v_last = float(keyframes[-1].get('value', 0))
+            t_last = float(keyframes[-1].get('time', 0)) / 1000.0
+            full_expr = "".join(exprs) + f"if(gt({t_var},{t_last}),{v_last},{float(keyframes[0].get('value',0))})" + (")" * len(exprs))
         else:
-            # Default: gentle zoom for any other property
-            vf_filter = "zoompan=z='min(zoom+0.0015,1.5)':d=125"
+            full_expr = str(float(keyframes[0].get('value', 0)))
+
+        if prop == 'opacity':
+            # Opacity (Fade over time): simulated by dynamically mapping the 0-1 scale to brightness (-1 to 0) which makes it fade to black 
+            vf_filter = f"eq=eval=frame:brightness='({full_expr})-1'"
+        elif prop == 'scale':
+            import subprocess
+            try:
+                probe_cmd = ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0', input_path]
+                res = subprocess.check_output(probe_cmd, text=True).strip()
+                if not res or 'x' not in res: res = '1280x720'
+            except Exception:
+                res = '1280x720'
+                
+            # FFmpeg zoompan evaluates 'in_time' or 'time', not 't'. Ensure minimum zoom scale is 1 to prevent inversion.
+            vf_filter = f"zoompan=z='max(1,{full_expr})':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={res}"
+        elif prop == 'rotation':
+            # ow/oh keeps video from cropping, c=black applies a clean background
+            vf_filter = f"rotate=a='{full_expr}*PI/180':ow=iw:oh=ih:c=black"
+        elif prop == 'blur':
+            # fallback for blur since FFmpeg doesn't natively animate boxblur luma_radius dynamically
+            vf_filter = f"boxblur=luma_radius='{full_expr}':luma_power=1"
+        else:
+            vf_filter = "null"
     else:
-        # No valid keyframes: apply a gentle zoom-pan as demonstration
-        vf_filter = "zoompan=z='min(zoom+0.0015,1.5)':d=125"
+        vf_filter = "null"
 
     cmd = [
         'ffmpeg', '-y', '-i', input_path,
@@ -7255,11 +6809,11 @@ def apply_motion_blur():
     output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_filename)
     file.save(input_path)
 
-    # tblend is inexpensive compared to minterpolate
-    blend_val = strength / 100.0
+    # Use dynamic frames based on strength. Higher strength = more frames blended = more blur
+    frames = max(3, int(strength / 4)) # E.g., strength 40 -> 10 frames
     cmd = [
         'ffmpeg', '-y', '-i', input_path,
-        '-vf', f"tblend=all_mode=average,framestep=1,setpts=N/FRAME_RATE/TB", 
+        '-vf', f"tmix=frames={frames}", 
         '-c:a', 'copy', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23',
         output_path
     ]
@@ -7457,12 +7011,15 @@ def analyze_style():
         result_data = {
             'success': True,
             'score': score,
-            'palette': palette,
             'duration': duration,
             'resolution': resolution,
             'fps': fps,
-            'color_temperature': color_temp,
             'has_audio': bool(a_stream),
+            'color': {
+                'palette': palette,
+                'temperature': color_temp,
+                'saturation': 1.0
+            },
             'pacing': {
                 'cuts_per_minute': cuts_per_minute,
                 'total_cuts': total_cuts,
@@ -7471,13 +7028,15 @@ def analyze_style():
             },
             'recommendations': recommendations
         }
-    except Exception as e:
-        import traceback
-        print(f"Style analysis error: {traceback.format_exc()}")
-        result_data = {'success': False, 'error': str(e)}
+        return jsonify(result_data)
         
-    cleanup_files([input_path])
-    return jsonify(result_data)
+    except Exception as e:
+        print(f"Error in analyze_style: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Analysis failed: {str(e)}'})
+    finally:
+        cleanup_files([input_path])
 
 
 if __name__ == '__main__':
@@ -7485,9 +7044,9 @@ if __name__ == '__main__':
     try:
         from celery_integration import init_celery_routes
         init_celery_routes(app)
-        print("✅ Celery integration initialized")
+        print("[OK] Celery integration initialized")
     except ImportError:
-        print("⚠️ Celery not available - running without background tasks")
+        print("[WARNING] Celery not available - running without background tasks")
     
     # Create a test user if none exists
     with app.app_context():

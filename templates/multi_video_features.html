@@ -180,9 +180,24 @@
                     <input type="file" class="form-control-file" id="promptAuxFiles" name="aux_files[]" multiple>
                     <small class="form-text text-muted">For 'merge videos', select additional videos here. For 'overlay at X,Y', select the overlay video/image here.</small>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-1">
                     <label for="promptText">Enter Command:</label>
-                    <input type="text" class="form-control" id="promptText" name="prompt" placeholder="e.g., merge_videos transition=fade duration=2, transition type=dissolve duration=1" required>
+                    <input type="text" class="form-control" id="promptText" name="prompt" placeholder="e.g., merge_videos transition=fade duration=2" required>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-2"><i class="fas fa-lightbulb"></i> Click a Quick Command below to try it out:</small>
+                    <div class="d-flex flex-wrap" style="gap: 8px;">
+                        <span class="badge badge-primary p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='trim start=5 end=15'">trim</span>
+                        <span class="badge badge-info p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='resize width=1280 height=720'">resize</span>
+                        <span class="badge badge-success p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='speed factor=2.0'">speed 2x</span>
+                        <span class="badge badge-warning p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='speed_ramp start=2 end=8 factor=0.5'">slow-mo ramp</span>
+                        <span class="badge badge-dark p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='color_grade preset=cinematic'">cinematic color</span>
+                        <span class="badge badge-danger p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='effect type=vignette strength=0.8'">vignette</span>
+                        <span class="badge badge-secondary p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='animation type=zoom start=0 end=5 scale=1.5'">zoom animation</span>
+                        <span class="badge badge-primary p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='merge_videos transition=fade duration=2'" style="background-color: #8e44ad;">merge (fade)</span>
+                        <span class="badge badge-primary p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='overlay type=text content=\'Cinematic\' position=bottom'" style="background-color: #d35400;">text overlay</span>
+                        <span class="badge badge-success p-2" style="cursor:pointer;" onclick="document.getElementById('promptText').value='extract_audio format=mp3'">extract_audio</span>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-cogs me-1"></i>Process Prompt</button>
             </form>
