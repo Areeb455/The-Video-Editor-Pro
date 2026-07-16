@@ -27,7 +27,7 @@ ENV PYTHONPATH=/app
 ENV REDIS_URL=redis://redis:6379/0
 
 # Expose port
-EXPOSE 5000
+EXPOSE 10000
 
 # Default command
 CMD ["python", "app.py"]
