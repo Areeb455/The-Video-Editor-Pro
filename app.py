@@ -6588,7 +6588,8 @@ def auto_cut():
                 ]
                 if run_ffmpeg_command(cmd)[0]:
                     temp_files.append(chunk_path)
-                    f.write(f"file '{chunk_path.replace('\\', '/')}'\n")
+                   normalized_chunk_path = chunk_path.replace('\\', '/')
+                   f.write(f"file '{normalized_chunk_path}'\n")
                     chunks_written += 1
         
         if chunks_written == 0:
